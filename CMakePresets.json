@@ -41,6 +41,23 @@
                 "CC": "clang",
                 "CXX": "clang++"
             }
+        },
+        {
+            "name": "win-msvc-debug",
+            "description": "MSVC preset for C++ projects",
+            "hidden": false,
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${sourceDir}/Debug",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            },
+            "environment": {
+                "CC": "cl",
+                "CXX": "cl"
+            }
         }
     ]
 }

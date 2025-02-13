@@ -15,7 +15,7 @@ constexpr uint32_t SECS_FOR_COMBINATION = 2;
 constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 3;
 constexpr uint32_t SECS_FOR_UNLOCK = 15;
 
-uint8_t countAlphPower(const uint8_t bitMask)
+uint32_t countAlphPower(const uint8_t bitMask)
 {
 	uint32_t alphPower = 0;
 
@@ -67,7 +67,7 @@ uint64_t doBinExp(uint64_t base, uint32_t power)
 	return res;
 }
 
-void countHackTime(uint32_t cmbnQnty, uint32_t secsForAttempt, uint32_t attemptsBeforeLock, uint32_t lockTime)
+void countHackTime(uint64_t cmbnQnty, uint32_t secsForAttempt, uint32_t attemptsBeforeLock, uint32_t lockTime)
 {
 	const uint32_t SECS_YEAR = 365 * 24 * 60 * 60;
 	const uint32_t SECS_DAY = 24 * 60 * 60;
@@ -76,26 +76,27 @@ void countHackTime(uint32_t cmbnQnty, uint32_t secsForAttempt, uint32_t attempts
 
 	double totalSecs = (static_cast<double>(cmbnQnty) * secsForAttempt) + ((static_cast<double>(cmbnQnty) / attemptsBeforeLock) * secsForAttempt * lockTime);
 
-	uint32_t years = totalSecs / SECS_YEAR;
+	uint32_t years = static_cast<uint32_t>(totalSecs) / SECS_YEAR;
 	totalSecs -= years * SECS_YEAR;
 
-	uint32_t days = totalSecs / SECS_DAY;
+	uint32_t days = static_cast<uint32_t>(totalSecs) / SECS_DAY;
 	totalSecs -= days * SECS_DAY;
 
-	uint32_t hours = totalSecs / SECS_HOURS;
+	uint32_t hours = static_cast<uint32_t>(totalSecs) / SECS_HOURS;
 	totalSecs -= hours * SECS_HOURS;
 
-	uint32_t minutes = totalSecs / SECS_MINUTES;
+	uint32_t minutes = static_cast<uint32_t>(totalSecs) / SECS_MINUTES;
 	totalSecs -= minutes * SECS_MINUTES;
 
-	uint32_t secs = std::round(totalSecs);
+	uint32_t secs = static_cast<uint32_t>(std::round(totalSecs));
 
 	std::cout << years << " year(s) - " << days << " day(s) - " << hours << " hour(s) - " << minutes << " minute(s)  " << secs << " sec(s). \n";
 }
 
 void checkPswdStrength(const std::string& pswd)
 {
-	UINT encoding = GetConsoleOutputCP();
+
+	UINT encoding = GetConsoleCP();
 
 	if (encoding == 866)
 	{
@@ -131,7 +132,7 @@ void checkPswdStrength(const std::string& pswd)
 		}
 
 		uint32_t alphPower = countAlphPower(bitMask);
-		uint64_t cmbnQnty = doBinExp(alphPower, pswd.size());
+		uint64_t cmbnQnty = doBinExp(alphPower, static_cast<uint32_t>(pswd.size()));
 
 		std::cout << "Power of the alphabet: " << alphPower << "\n";
 		std::cout << "Password length: " << pswd.size() << "\n";

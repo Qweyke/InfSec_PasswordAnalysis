@@ -2,18 +2,25 @@
 #include <Windows.h>
 #include <iostream>
 
-// ASCII extended, CP866
-constexpr uint8_t SPECIAL = 15 + 7 + 6 + 4;      // [33; 47] | [58; 64] | [91; 96] |  [123; 126]
-constexpr uint8_t DIGITS = 10;                   // [48; 57]
-constexpr uint8_t UPR_LAT_LETTERS = 26;          // [65; 90]
-constexpr uint8_t LWR_LAT_LETTERS = 26;          // [97; 122]
-constexpr uint8_t UPR_CYR_LETTERS = 32 + 1;      // [128; 159] | 240
-constexpr uint8_t LWR_CYR_LETTERS = 16 + 16 + 1; // [160; 175] | [224; 239] | 241
+namespace
+{
+	// ASCII extended, CP866
+	constexpr uint8_t SPECIAL = 15 + 7 + 6 + 4;      // [33; 47] | [58; 64] | [91; 96] |  [123; 126]
+	constexpr uint8_t DIGITS = 10;                   // [48; 57]
+	constexpr uint8_t UPR_LAT_LETTERS = 26;          // [65; 90]
+	constexpr uint8_t LWR_LAT_LETTERS = 26;          // [97; 122]
+	constexpr uint8_t UPR_CYR_LETTERS = 32 + 1;      // [128; 159] | 240
+	constexpr uint8_t LWR_CYR_LETTERS = 16 + 16 + 1; // [160; 175] | [224; 239] | 241
 
-// Variables for hacking time
-constexpr uint32_t SECS_FOR_COMBINATION = 2;
-constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 3;
-constexpr uint32_t SECS_FOR_UNLOCK = 15;
+	// Variables for hacking time
+	constexpr uint32_t SECS_FOR_COMBINATION = 2;
+	constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 3;
+	constexpr uint32_t SECS_FOR_UNLOCK = 15;
+
+	// Max value 2^64
+	constexpr uint64_t MAX_VALUE = (std::numeric_limits<uint64_t>::max)();
+
+} // namespace
 
 uint32_t countAlphPower(const uint8_t bitMask)
 {
@@ -50,20 +57,22 @@ uint64_t doBinExp(uint64_t base, uint32_t power)
 
 		if (power % 2 == 1) // check last bit
 		{
-			if (res >= (std::numeric_limits<uint64_t>::max)() / base)
+			if (res >= MAX_VALUE / base)
 
-				throw std::runtime_error("Exponentiation \"result\" variable overflow");
+				throw std::overflow_error("Exponentiation \"result\" variable overflow");
 
 			res *= base;
 		}
 
-		if (base >= (std::numeric_limits<uint64_t>::max)() / base)
-			throw std::runtime_error("Exponentiation \"base\" variable overflow");
+		if (base >= MAX_VALUE / base)
+
+			throw std::overflow_error("Exponentiation \"base\" variable overflow");
 
 		power /= 2;   // dispose of last bit
 		base *= base; // iterate through each of binary places
 	}
 
+	std::cout << "Combinations quantity: " << res << "\n";
 	return res;
 }
 
@@ -74,90 +83,103 @@ void countHackTime(uint64_t cmbnQnty, uint32_t secsForAttempt, uint32_t attempts
 	const uint32_t SECS_HOURS = 60 * 60;
 	const uint32_t SECS_MINUTES = 60;
 
-	double totalSecs = (static_cast<double>(cmbnQnty) * secsForAttempt) + ((static_cast<double>(cmbnQnty) / attemptsBeforeLock) * secsForAttempt * lockTime);
+	uint64_t totalSecs;
 
-	uint32_t years = static_cast<uint32_t>(totalSecs) / SECS_YEAR;
+	totalSecs = (cmbnQnty * secsForAttempt) + ((cmbnQnty / attemptsBeforeLock) * secsForAttempt * lockTime);
+	std::cout << totalSecs << " Total secs \n";
+
+	uint64_t years = (totalSecs) / SECS_YEAR;
 	totalSecs -= years * SECS_YEAR;
 
-	uint32_t days = static_cast<uint32_t>(totalSecs) / SECS_DAY;
+	uint64_t days = (totalSecs) / SECS_DAY;
 	totalSecs -= days * SECS_DAY;
 
-	uint32_t hours = static_cast<uint32_t>(totalSecs) / SECS_HOURS;
+	uint64_t hours = (totalSecs) / SECS_HOURS;
 	totalSecs -= hours * SECS_HOURS;
 
-	uint32_t minutes = static_cast<uint32_t>(totalSecs) / SECS_MINUTES;
+	uint64_t minutes = (totalSecs) / SECS_MINUTES;
 	totalSecs -= minutes * SECS_MINUTES;
 
-	uint32_t secs = static_cast<uint32_t>(std::round(totalSecs));
+	uint64_t secs = (totalSecs);
 
 	std::cout << years << " year(s) - " << days << " day(s) - " << hours << " hour(s) - " << minutes << " minute(s)  " << secs << " sec(s). \n";
 }
 
-void checkPswdStrength(const std::string& pswd)
+void checkPswdStrength()
 {
 
-	UINT encoding = GetConsoleCP();
+	UINT encodingInp = GetConsoleCP();
 
-	if (encoding == 866)
+	std::cout << "Encoding of console: Inp-" << encodingInp << " Out-" << GetConsoleOutputCP() << "\n";
+
+	if (encodingInp != 866)
 	{
-		std::cout << "DOS Cyrillic Russian - CP" << encoding << "\n";
+		SetConsoleCP(866);
+		SetConsoleOutputCP(866);
 
-		uint8_t bitMask = 0;
-
-		for (unsigned char ch : pswd)
-		{
-			if ((ch >= '!' && ch <= '/') || (ch >= ':' && ch <= '@') || (ch >= '[' && ch <= '`') || (ch >= '{' && ch <= '~'))
-
-				bitMask |= 1 << 0; // SPECIAL
-
-			else if (ch >= '0' && ch <= '9')
-
-				bitMask |= 1 << 1; // DIGITS
-
-			else if (ch >= 'A' && ch <= 'Z')
-
-				bitMask |= 1 << 2; // UPR_LAT_LETTERS
-
-			else if (ch >= 'a' && ch <= 'z')
-
-				bitMask |= 1 << 3; // LWR_LAT_LETTERS
-
-			else if ((ch >= 128 && ch <= 159) || ch == 240)
-
-				bitMask |= 1 << 4; // UPR_CYR_LETTERS
-
-			else if ((ch >= 160 && ch <= 175) || (ch >= 224 && ch <= 239) || ch == 241)
-
-				bitMask |= 1 << 5; // LWR_CYR_LETTERS
-		}
-
-		uint32_t alphPower = countAlphPower(bitMask);
-		uint64_t cmbnQnty = doBinExp(alphPower, static_cast<uint32_t>(pswd.size()));
-
-		std::cout << "Power of the alphabet: " << alphPower << "\n";
-		std::cout << "Password length: " << pswd.size() << "\n";
-		std::cout << "Combinations quantity: " << cmbnQnty << "\n";
-
-		countHackTime(cmbnQnty, 2, 3, 10);
+		std::cout << "Encoding of console changed to: Inp-" << GetConsoleCP() << " Out-" << GetConsoleOutputCP() << "\n";
 	}
 
-	else
-		throw std::runtime_error("Unsupported encoding: " + std::to_string(encoding));
+	std::string pswd;
+	std::cin >> pswd;
+
+	uint8_t bitMask = 0;
+
+	for (unsigned char ch : pswd)
+	{
+		if ((ch >= '!' && ch <= '/') || (ch >= ':' && ch <= '@') || (ch >= '[' && ch <= '`') || (ch >= '{' && ch <= '~'))
+
+			bitMask |= 1 << 0; // SPECIAL
+
+		else if (ch >= '0' && ch <= '9')
+
+			bitMask |= 1 << 1; // DIGITS
+
+		else if (ch >= 'A' && ch <= 'Z')
+
+			bitMask |= 1 << 2; // UPR_LAT_LETTERS
+
+		else if (ch >= 'a' && ch <= 'z')
+
+			bitMask |= 1 << 3; // LWR_LAT_LETTERS
+
+		else if ((ch >= 128 && ch <= 159) || ch == 240)
+
+			bitMask |= 1 << 4; // UPR_CYR_LETTERS
+
+		else if ((ch >= 160 && ch <= 175) || (ch >= 224 && ch <= 239) || ch == 241)
+
+			bitMask |= 1 << 5; // LWR_CYR_LETTERS
+	}
+
+	uint32_t alphPower = countAlphPower(bitMask);
+	std::cout << "Power of the alphabet: " << alphPower << "\n";
+	std::cout << "Password length: " << pswd.size() << "\n";
+
+	uint64_t cmbnQnty;
+
+	try
+	{
+		cmbnQnty = doBinExp(alphPower, static_cast<uint32_t>(pswd.size()));
+	}
+	catch (std::overflow_error)
+	{
+		std::cout << "Combinations quantity limit for C++ uint64_t exceeded, combinations quantity set to 2^64 \n";
+		cmbnQnty = MAX_VALUE;
+	}
+
+	countHackTime(cmbnQnty, SECS_FOR_COMBINATION, ATTEMPTS_BEFORE_LOCK, SECS_FOR_UNLOCK);
 }
 
 int main()
 {
-	std::string input;
-	std::cin >> input;
-	std::cout << "\n";
-
 	try
 	{
-		checkPswdStrength(input);
+		checkPswdStrength();
 	}
-	catch (std::runtime_error& Er)
+	catch (std::exception& er)
 	{
-		std::cout << "Error: " << Er.what() << "\n";
+		std::cout << "Error: " << er.what() << "\n";
 		return 1;
 	}
 

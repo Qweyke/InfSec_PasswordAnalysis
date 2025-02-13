@@ -17,7 +17,8 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/Release/bin"
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/Release/bin",
+                "CMAKE_PREFIX_PATH": "P:/boost_1_87_0"
             },
             "environment": {
                 "CC": "clang",
@@ -35,7 +36,8 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/Debug/bin"
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/Debug/bin",
+                "CMAKE_PREFIX_PATH": "P:/boost_1_87_0"
             },
             "environment": {
                 "CC": "clang",
@@ -43,21 +45,32 @@
             }
         },
         {
-            "name": "win-msvc-debug",
+            "name": "win-msvc",
             "description": "MSVC preset for C++ projects",
             "hidden": false,
             "generator": "Visual Studio 17 2022",
-            "binaryDir": "${sourceDir}/Debug",
+            "binaryDir": "${sourceDir}/Build/",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             },
             "environment": {
                 "CC": "cl",
                 "CXX": "cl"
             }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "win-msvc-debug",
+            "configurePreset": "win-msvc",
+            "configuration": "debug"
+        },
+        {
+            "name": "win-msvc-release",
+            "configurePreset": "win-msvc",
+            "configuration": "release"
         }
     ]
 }

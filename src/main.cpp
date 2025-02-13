@@ -15,7 +15,7 @@ namespace
 	// Variables for hacking time
 	constexpr uint32_t SECS_FOR_COMBINATION = 2;
 	constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 3;
-	constexpr uint32_t SECS_FOR_UNLOCK = 15;
+	constexpr uint32_t SECS_FOR_UNLOCK = 1;
 
 	// Max value 2^64
 	constexpr uint64_t MAX_VALUE = (std::numeric_limits<uint64_t>::max)();
@@ -83,24 +83,54 @@ void countHackTime(uint64_t cmbnQnty, uint32_t secsForAttempt, uint32_t attempts
 	const uint32_t SECS_HOURS = 60 * 60;
 	const uint32_t SECS_MINUTES = 60;
 
-	uint64_t totalSecs;
+	uint64_t totalSecs = 0;
 
-	totalSecs = (cmbnQnty * secsForAttempt) + ((cmbnQnty / attemptsBeforeLock) * secsForAttempt * lockTime);
+	if (cmbnQnty > MAX_VALUE / secsForAttempt)
+	{
+		std::cout << "Overflow in multiplying secs and combinations. Setting total secs to MAX_VALUE.\n";
+		totalSecs = MAX_VALUE;
+	}
+	else
+	{
+		totalSecs = cmbnQnty * secsForAttempt;
+	}
+
+	uint64_t lockPenalty = 0;
+	if (cmbnQnty / attemptsBeforeLock > MAX_VALUE / lockTime)
+	{
+		std::cout << "Overflow in lock penalty. Setting lock penalty to MAX_VALUE.\n";
+		lockPenalty = MAX_VALUE;
+	}
+	else
+	{
+		lockPenalty = (cmbnQnty / attemptsBeforeLock) * lockTime;
+	}
+
+	if (totalSecs > MAX_VALUE - lockPenalty)
+	{
+		std::cout << "Overflow in suming lock penalty and secs for all attempts. Setting total secs to MAX_VALUE.\n";
+		totalSecs = MAX_VALUE;
+	}
+	else
+	{
+		totalSecs += lockPenalty;
+	}
+
 	std::cout << totalSecs << " Total secs \n";
 
-	uint64_t years = (totalSecs) / SECS_YEAR;
-	totalSecs -= years * SECS_YEAR;
+	uint64_t years = totalSecs / SECS_YEAR;
+	totalSecs %= SECS_YEAR;
 
-	uint64_t days = (totalSecs) / SECS_DAY;
-	totalSecs -= days * SECS_DAY;
+	uint64_t days = totalSecs / SECS_DAY;
+	totalSecs %= SECS_DAY;
 
-	uint64_t hours = (totalSecs) / SECS_HOURS;
-	totalSecs -= hours * SECS_HOURS;
+	uint64_t hours = totalSecs / SECS_HOURS;
+	totalSecs %= SECS_HOURS;
 
-	uint64_t minutes = (totalSecs) / SECS_MINUTES;
-	totalSecs -= minutes * SECS_MINUTES;
+	uint64_t minutes = totalSecs / SECS_MINUTES;
+	totalSecs %= SECS_MINUTES;
 
-	uint64_t secs = (totalSecs);
+	uint64_t secs = totalSecs;
 
 	std::cout << years << " year(s) - " << days << " day(s) - " << hours << " hour(s) - " << minutes << " minute(s)  " << secs << " sec(s). \n";
 }

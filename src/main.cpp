@@ -13,9 +13,9 @@ namespace
 	constexpr uint8_t LWR_CYR_LETTERS = 16 + 16 + 1; // [160; 175] | [224; 239] | 241
 
 	// Variables for hacking time
-	constexpr uint32_t SECS_FOR_COMBINATION = 2;
-	constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 3;
-	constexpr uint32_t SECS_FOR_UNLOCK = 1;
+	constexpr uint32_t SECS_FOR_COMBINATION = 1;
+	constexpr uint32_t ATTEMPTS_BEFORE_LOCK = 5;
+	constexpr uint32_t SECS_FOR_UNLOCK = 10;
 
 	// Max value 2^64
 	constexpr uint64_t MAX_VALUE = (std::numeric_limits<uint64_t>::max)();
@@ -103,7 +103,12 @@ void countHackTime(uint64_t cmbnQnty, uint32_t secsForAttempt, uint32_t attempts
 	}
 	else
 	{
-		lockPenalty = (cmbnQnty / attemptsBeforeLock) * lockTime;
+		if (cmbnQnty % attemptsBeforeLock == 0)
+		{
+			lockPenalty = ((cmbnQnty / attemptsBeforeLock) * lockTime) - 1 * lockTime;
+		}
+		else
+			lockPenalty = (cmbnQnty / attemptsBeforeLock) * lockTime;
 	}
 
 	if (totalSecs > MAX_VALUE - lockPenalty)
@@ -154,6 +159,7 @@ void checkPswdStrength()
 	std::cin >> pswd;
 
 	uint8_t bitMask = 0;
+	uint32_t size = 0;
 
 	for (unsigned char ch : pswd)
 	{
@@ -180,17 +186,19 @@ void checkPswdStrength()
 		else if ((ch >= 160 && ch <= 175) || (ch >= 224 && ch <= 239) || ch == 241)
 
 			bitMask |= 1 << 5; // LWR_CYR_LETTERS
+
+		size++;
 	}
 
 	uint32_t alphPower = countAlphPower(bitMask);
 	std::cout << "Power of the alphabet: " << alphPower << "\n";
-	std::cout << "Password length: " << pswd.size() << "\n";
+	std::cout << "Password length: " << size << "\n";
 
 	uint64_t cmbnQnty;
 
 	try
 	{
-		cmbnQnty = doBinExp(alphPower, static_cast<uint32_t>(pswd.size()));
+		cmbnQnty = doBinExp(alphPower, size);
 	}
 	catch (std::overflow_error)
 	{
